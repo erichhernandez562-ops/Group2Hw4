@@ -8,11 +8,14 @@ Bowling_Frame::Bowling_Frame(int fnum)
 {
 	score1_ = 0;
 	score2_ = 0;
+	score3_ = 0;
 	strike_ = false;
 	spare_ = false;
 	frame_num_ = fnum;
 	frame_score_ = 0;
-
+	roll_one_ = false;
+	roll_two_ = false;
+	roll_three_ = false;
 	next_frame_ = NULL;
 	prev_frame_ = NULL;
 
@@ -72,8 +75,84 @@ void Bowling_Frame::update_scores()
 		if ((score1_ + score2_) == 10) spare_ = true;
 	}
 	else if (next_frame_) 	next_frame_->update_scores();
-
+// calculate the frame score
 	frame_score_ = score1_ + score2_;
+
+
+	// spare bonus checks if the next frame is not null and if the current frame is a spare
+	if(spare_ && next_frame_ != NULL)
+	{
+		frame_score_ += next_frame_->score1();
+	}
+
+    // strike bonus checks if the next frame is not null and if the current frame is a strike
+	if(strike_ && next_frame_ != NULL)
+	{
+		frame_score_ += next_frame_->score1();
+		// if the next frame is a strike, we need to check if the next frame is not null and add the score of the next frame's first roll
+		if(next_frame_->strike()){
+			
+			if(next_frame_->next_frame() != NULL)
+			{
+				frame_score_ += next_frame_->next_frame()->score1();
+			}
+
+			else if(next_frame_->frame_num() == 10)
+			{
+				frame_score_ += next_frame_->score2();
+			}
+		}
+		else
+		{
+			frame_score_ += next_frame_->score2();
+		}
+
 }
 
 
+
+
+// frame 10 does the bonus stuff
+if(frame_num_ == 10&& (strike_ || spare_))
+{
+	// if the frame is a strike, we need to roll two more times
+	if(strike_)
+	{
+		if(!roll_two_)
+		{
+				std::uniform_int_distribution<std::mt19937::result_type> distX(0,10);
+				score2_ = distX(rng); 
+				roll_two_ = true;
+		}
+		if(!roll_three_)
+		{
+
+			int remaining = 10 - score2_;
+			if(remaining == 0){
+				remaining = 10;
+			}
+				std::uniform_int_distribution<std::mt19937::result_type> distX(0,remaining);
+				score3_ = distX(rng); 
+				roll_three_ = true;
+		}
+	}
+	else if(spare_)
+	{
+		if(!roll_three_)
+		{
+			
+				std::uniform_int_distribution<std::mt19937::result_type> distX(0,10);
+				score3_ = distX(rng); 
+				roll_three_ = true;
+		}
+	}
+	frame_score_ = score1_ + score2_ + score3_;
+
+}
+
+
+
+
+
+
+}
